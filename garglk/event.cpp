@@ -116,7 +116,7 @@ void gli_input_handle_key(glui32 key)
         switch (key) {
         case keycode_Tab:
             gli_input_next_focus();
-            return;
+            break;
         case keycode_PageUp:
         case keycode_PageDown:
         case keycode_MouseWheelUp:

@@ -28,6 +28,8 @@
 #include "glk.h"
 #include "garglk.h"
 
+#define countof(x) (sizeof x / sizeof *x)
+
 // how many pixels we add to left/right margins
 #define SLOP (2 * GLI_SUBPIX)
 
@@ -1554,6 +1556,77 @@ void gcmd_buffer_accept_readline(window_t *win, glui32 arg)
         break;
 
     // Regular keys
+
+
+         case keycode_Tab:
+             {
+                 // Do not auto complete in the middle of a word
+                 if (dwin->incurs == dwin->numchars || dwin->chars[dwin->incurs] == ' ')
+                 {
+                     int i, n, z;
+                     char c;
+
+                     // Step backward to find last space on input line
+                     for (i=dwin->incurs-1; i>0; i--)
+                     {
+                         //Convert to lowercase
+                         c = dwin->chars[i];
+                         if (c >= 'A' && c <= 'Z')
+                             c = c+32;
+
+                         if (dwin->chars[i] == 0x20)
+                     	       break;
+                     }
+
+                     // Step forward to extract last word
+                     glui32 word[dwin->incurs-i-1];
+
+                     for (n=i; n<dwin->incurs; n++)
+                         word[n-i] = dwin->chars[n];
+
+                     // Loop through lines of prv output
+                     for (i=1; i<=dwin->scrollmax; i++)
+                     {
+                         // Step backwards through char of the line
+                         for (n=dwin->lines[i].len; n>=0; n--)
+                         {
+                             // Step forward again, break if char doesn't match word
+                             for (z=0; z<=countof(word); z++)
+                             {
+                                 // Convert to lowercase
+                                 c = dwin->lines[i].chars[n+z];
+                                 if (c >= 'A' && c <= 'Z')
+                            	        c = c+32;
+
+                                 // Compensate for no space before first char in line
+                                 int g = (n==0) ? z+1 : z;
+
+                                 if (c != (char)word[g])
+                                     break;
+
+                                 if (g == countof(word))
+                                     goto BreakTab; // Match found, break all three loops
+                             }
+                         }
+                     }
+                     BreakTab:
+
+                     /* Call input event for each char in tab complete
+                        i is the line, n is the first char of match, z is length of match,
+                        so n+z is end of match and start of tab complete */
+                     n += 1;
+                     while ((c  >= 'a' && c <= 'z') || (c  >= 'A' && c <= 'Z') || (c  >= '0' && c <= '9'))
+                     {
+                         put_text_uni(dwin, &dwin->lines[i].chars[n+z], 1, dwin->incurs, 0);
+                         n++;
+                         c = (char)dwin->lines[i].chars[n+z];
+                     }
+                     glui32 space = 0x20;
+                     put_text_uni(dwin, &space, 1, dwin->incurs, 0);
+                 }
+             }
+             break;
+
 
     case keycode_Return:
         acceptline(win, arg);
