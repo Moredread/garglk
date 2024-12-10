@@ -636,7 +636,7 @@ static const std::vector<std::pair<std::vector<glui32>, glui32>> ligatures = {
 static int gli_string_impl(int x, FontFace fontface, const glui32 *s, std::size_t n, int spw, const std::function<void(int, const std::array<Bitmap, GLI_SUBPIX> &)> &callback)
 {
     auto &f = gfont_table.at(fontface);
-    bool dolig = !FT_IS_FIXED_WIDTH(f.face());
+    bool dolig = false;
     int prev = -1;
     glui32 c;
 
